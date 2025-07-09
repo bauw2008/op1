@@ -1,0 +1,234 @@
+#!/bin/sh /etc/rc.common
+# OpenWrt vsftpd
+
+START=50
+USE_PROCD=1
+
+BIN="/usr/sbin/vsftpd"
+OUTPUT_CONF="/var/run/vsftpd/vsftpd.conf"
+
+. /lib/functions.sh
+
+generate_vsftpd_conf_from_uci() {
+    local VAR=/var/run/vsftpd
+    local CONF="$OUTPUT_CONF"
+    local VUSER_DB="$VAR/vusers"
+    local VUSER_CONF_DIR="$VAR/users"
+    local CHROOT_DIR="$VAR/empty"
+
+    rm -f "$CONF"
+    rm -rf "$VUSER_CONF_DIR" "$CHROOT_DIR"
+    mkdir -m 0755 -p "$VAR" "$VUSER_CONF_DIR" "$CHROOT_DIR"
+
+    output_field() {
+        local section="$1" key="$2" inifield="$3" def="$4" val
+        [ -z "$inifield" ] && inifield="$key"
+        config_get val "$section" "$key"
+        [ -z "$val" ] && val="$def"
+        echo "$inifield=$val" >> "$CONF"
+    }
+
+    output_bool() {
+        local section="$1" key="$2" inifield="$3" def="$4" val
+        [ -z "$inifield" ] && inifield="$key"
+        config_get val "$section" "$key"
+        [ -z "$val" ] && val="$def"
+        [ "$val" = "1" ] && val="YES" || val="NO"
+        echo "$inifield=$val" >> "$CONF"
+    }
+
+    output_const() {
+        echo "$1=$2" >> "$CONF"
+    }
+
+    get_value() {
+        local val; config_get val "$1" "$2"; echo "$val"
+    }
+
+    vusers_iterate() {
+        local cfg="$1" name home owner _umask maxrate write upload others
+
+        config_get name "$cfg" username
+        config_get home "$cfg" home
+        config_get _umask "$cfg" umask
+        config_get maxrate "$cfg" maxrate
+        config_get write "$cfg" writemkdir
+        config_get upload "$cfg" upload
+        config_get others "$cfg" others
+        config_get owner "vuser" username
+
+        rm -f "$VUSER_CONF_DIR/$name"
+        touch "$VUSER_CONF_DIR/$name"
+
+        [ -z "$home" ] && home="$CHROOT_DIR"
+        echo "local_root=$home" > "$VUSER_CONF_DIR/$name"
+
+        echo "anon_world_readable_only=NO" >> "$VUSER_CONF_DIR/$name"
+        echo "anon_mkdir_write_enable=$( [ "$write" = "1" ] && echo YES || echo NO )" >> "$VUSER_CONF_DIR/$name"
+        echo "write_enable=$( [ "$write" = "1" ] && echo YES || echo NO )" >> "$VUSER_CONF_DIR/$name"
+        echo "anon_upload_enable=$( [ "$upload" = "1" ] && echo YES || echo NO )" >> "$VUSER_CONF_DIR/$name"
+        echo "anon_other_write_enable=$( [ "$others" = "1" ] && echo YES || echo NO )" >> "$VUSER_CONF_DIR/$name"
+        echo "anon_umask=${_umask:-022}" >> "$VUSER_CONF_DIR/$name"
+        echo "anon_max_rate=${maxrate:-0}" >> "$VUSER_CONF_DIR/$name"
+
+        [ ! -d "$home" ] && {
+            mkdir -p "$home"
+            chown "$owner:$owner" "$home"
+            chmod -R a+w "$home"
+        }
+    }
+
+    config_load vsftpd
+
+    # listen options
+    config_get enabled listen enabled 1
+    [ "$enabled" = "0" ] && return 1
+
+    output_const "background" NO
+    output_field listen port "listen_port" 21
+    output_field listen dataport "ftp_data_port" 20
+    output_field listen pasv_min_port "pasv_min_port" 50000
+    output_field listen pasv_max_port "pasv_max_port" 51000
+    output_bool listen listen listen 1
+    output_bool listen listen_ipv6 listen_ipv6 0
+
+    # global
+    output_bool global write write_enable 1
+    output_bool global download download_enable 1
+    output_bool global dirlist dirlist_enable 1
+    output_bool global lsrecurse ls_recurse_enable 0
+    output_bool global dotfile force_dot_files 0
+    output_field global umask local_umask 022
+
+    local ftpd_banner=$(get_value global banner)
+    [ -n "$ftpd_banner" ] && output_const ftpd_banner "$ftpd_banner"
+
+    output_bool global dirmessage dirmessage_enable 0
+    output_field global dirmsgfile message_file ".message"
+
+    # connection
+    output_bool connection portmode port_enable 1
+    output_bool connection pasvmode pasv_enable 1
+
+    case "$(get_value connection ascii)" in
+        download) output_const ascii_download_enable YES; output_const ascii_upload_enable NO;;
+        upload)   output_const ascii_download_enable NO; output_const ascii_upload_enable YES;;
+        both)     output_const ascii_download_enable YES; output_const ascii_upload_enable YES;;
+        *)        output_const ascii_download_enable NO; output_const ascii_upload_enable NO;;
+    esac
+
+    output_field connection idletimeout idle_session_timeout 1800
+    output_field connection conntimeout connect_timeout 120
+    output_field connection dataconntimeout data_connection_timeout 120
+    output_field connection maxclient max_clients 0
+    output_field connection maxperip max_per_ip 0
+    output_field connection maxrate local_max_rate 0
+
+    local max_login_fails=$(get_value connection maxretry)
+    [ -z "$max_login_fails" ] || [ "$max_login_fails" -lt 1 ] && max_login_fails=3
+    output_const max_login_fails "$max_login_fails"
+
+    # anonymous
+    ftp_username=$(get_value anonymous ftp_username)
+    [ -z "$ftp_username" ] && ftp_username="ftp"
+
+    output_const "ftp_username" "$ftp_username"
+
+    mkdir -m 0755 -p "/home/$ftp_username"
+    chown "$ftp_username:$ftp_username" "/home/$ftp_username"
+
+    output_const "anon_world_readable_only" NO
+
+    anon_enable=$(get_value anonymous enabled)
+    if [ "$anon_enable" = "1" ]; then
+        anon_root=$(get_value anonymous root)
+        [ -z "$anon_root" ] && anon_root="/home/ftp"
+
+        output_const "anonymous_enable" YES
+        output_const "no_anon_password" YES
+        output_const "anon_root" "$anon_root"
+        output_field anonymous 'umask' "anon_umask" 022
+        output_field anonymous maxrate "anon_max_rate" 0
+        output_bool anonymous writemkdir "anon_mkdir_write_enable" 0
+        output_bool anonymous upload "anon_upload_enable" 0
+        output_bool anonymous others "anon_other_write_enable" 0
+
+        mkdir -p "$anon_root"
+        chown -R "$ftp_username:$ftp_username" "$anon_root"
+    else
+        output_const "anonymous_enable" NO
+    fi
+
+    # log
+	output_bool log syslog "syslog_enable" 0
+	output_bool log xferlog "xferlog_enable" 0
+	output_field log 'file' "vsftpd_log_file" 0
+
+    # vuser
+    local vuser_enabled=0
+    config_get vuser_enabled vuser enabled 0
+    if [ "$vuser_enabled" = "1" ]; then
+        output_const guest_enable YES
+        output_field vuser username guest_username ftp
+        output_const uci_config_name vsftpd
+        output_const user_config_dir "$VUSER_CONF_DIR"
+        config_foreach vusers_iterate user
+    fi
+
+    # local user settings
+    output_const allow_writeable_chroot YES
+    output_const secure_chroot_dir "$CHROOT_DIR"
+
+    config_get local_enable local enabled 0
+    if [ "$local_enable" = "1" ] || [ "$vuser_enabled" = "1" ]; then
+        output_const local_enable YES
+
+        config_get local_root local root "/"
+        output_const local_root "$local_root"
+    else
+        output_const local_enable NO
+    fi
+
+    output_const seccomp_sandbox NO
+    output_const use_localtime YES
+
+    return 0
+}
+
+start_service() {
+    config_load vsftpd
+    generate_vsftpd_conf_from_uci
+
+    config_get listen_enabled listen enabled 1
+    [ "$listen_enabled" = "0" ] && return 1
+
+    local args=""
+    config_get enable4 listen enable4 0
+    config_get enable6 listen enable6 0
+
+    if [ "$enable4" = "1" ]; then
+        config_get listen_addr4 listen ipv4 "0.0.0.0"
+        args="$args -olisten=YES -olisten_ipv6=NO -olisten_address=$listen_addr4"
+    fi
+
+    if [ "$enable6" = "1" ]; then
+        config_get listen_addr6 listen ipv6 "::"
+        args="$args -olisten=NO -olisten_ipv6=YES -olisten_address6=$listen_addr6"
+    fi
+
+    procd_open_instance
+    procd_set_param command "$BIN" $args "$OUTPUT_CONF"
+    procd_set_param respawn
+    procd_set_param file /etc/config/vsftpd
+    procd_close_instance
+}
+
+service_triggers() {
+    procd_add_reload_trigger "vsftpd"
+}
+
+reload_service() {
+    stop
+    start
+}
+

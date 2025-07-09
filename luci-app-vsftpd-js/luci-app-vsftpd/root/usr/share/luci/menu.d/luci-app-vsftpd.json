@@ -1,0 +1,17 @@
+{
+    "admin/nas/vsftpd": {
+        "title": "FTP Server",
+        "order": 20,
+        "action": {
+            "type": "view",
+            "path": "vsftpd/vsftpd"
+        },
+        "depends": {
+            "acl": ["luci-app-vsftpd"],
+            "uci": {
+                "vsftpd": true
+            }
+        }
+    }
+}
+
