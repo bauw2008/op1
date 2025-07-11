@@ -1,11 +1,11 @@
 #!/bin/sh
 
-#设置默认主题语言
+# zh_cn
 uci set luci.main.lang=zh_cn
 #uci set luci.main.mediaurlbase=/luci-static/alpha
 uci commit luci
 
-#设置时区
+# ntp
 uci set system.@system[-1].hostname='OpenWrt'
 uci set system.@system[0].timezone=CST-8
 uci set system.@system[0].zonename=Asia/Shanghai
@@ -16,7 +16,12 @@ uci -q add_list system.ntp.server='ntp.ntsc.ac.cn'
 uci -q add_list system.ntp.server='cn.pool.ntp.org'
 uci commit system
 
-#删除状态页不需显示的
+# network
+uci delete network.lan.ipaddr
+uci add_list network.lan.ipaddr='10.0.0.1/24'
+uci commit network
+
+# status rm -f 
 rm -f /www/luci-static/resources/view/status/include/25_storage.js
 #rm -f /www/luci-static/resources/view/status/include/20_memory.js
 #rm -f /www/luci-static/resources/view/status/include/50_dsl.js
@@ -25,11 +30,11 @@ rm -f /www/luci-static/resources/view/status/include/25_storage.js
 #rm -f /www/luci-static/resources/view/status/include/80_upnp.js
 rm -f /www/luci-static/resources/view/status/include/90_mwan3.js
 
-#删除不需显示的
+# nginx rm -f 
 #rm -f /etc/nginx/uci.conf.template-opkg
 #rm -f /etc/config/nginx-opkg
 
-#修改显示固件
+# version
 #sed -i "s/LuCI openwrt-22.03 branch/LuCI branch/g" /usr/lib/lua/luci/version.lua
 sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 #sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
@@ -37,24 +42,14 @@ sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
 echo "DISTRIB_DESCRIPTION='OpenWrt main'" >> /etc/openwrt_release
 
-#设置ipk菜单位置
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/aria2.lua
-#sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aria2/overview_status.htm
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/hd_idle.lua
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/samba.lua
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/samba4.lua
+# menu.d/controller
+sed -i 's/\"services\"/\"nas\"/g' usr/share/luci/menu.d/luci-app-ksmbd.json
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/minidlna.lua
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/transmission.lua
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/mjpg-streamer.lua
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/p910nd.lua
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/usb_printer.lua
-#sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/xunlei.lua
-#sed -i 's/services/nas/g'  /usr/lib/lua/luci/view/minidlna_status.htm
-#sed -i 's/\"services\"/\"vpn\"/g'  /usr/lib/lua/luci/controller/vssr.lua
-#sed -i 's/\"services\"/\"vpn\"/g'  /usr/lib/lua/luci/controller/bypass.lua
-#sed -i 's/\"services\"/\"vpn\"/g'  /usr/lib/lua/luci/controller/shadowsocksr.lua
 
-#镜像源替换
+# apk
 
 cat <<EOF >> /etc/apk/repositories.d/customfeeds.list
 
@@ -77,19 +72,16 @@ https://bauw2.serv00.net/snapshots/packages/x86_64/packages/packages.adb
 #https://downloads.immortalwrt.org/snapshots/packages/x86_64/video/packages.adb
 EOF
 
-FILE="/etc/apk/repositories.d/distfeeds.list"
+sed -i 's|^https://downloads.openwrt.org/snapshots/targets/x86/64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/base/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/luci/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
 
-# 注释掉指定的4条源
-sed -i 's|^https://downloads.openwrt.org/snapshots/targets/x86/64/packages/packages.adb|#&|' "$FILE"
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/base/packages.adb|#&|' "$FILE"
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/luci/packages.adb|#&|' "$FILE"
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/packages/packages.adb|#&|' "$FILE"
-
-#无线网络相关配置
+# wireless
 #sed -i '/option disabled/d' /etc/config/wireless
 #sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 
-#nginx
+# nginx
 grep -q "uwsgi_read_timeout" /etc/nginx/conf.d/luci.locations 2>/dev/null || {
 	sed -i "s/include uwsgi_params;/include uwsgi_params;\n\t\tuwsgi_read_timeout 300s;/" /etc/nginx/conf.d/luci.locations
 	sed -i '/ubus_parallel_req/a\        ubus_script_timeout 600;' /etc/nginx/conf.d/luci.locations
@@ -101,9 +93,6 @@ sed -i \
 	/etc/nginx/uci.conf.template
 grep -q "client_body_buffer_size" /etc/nginx/uci.conf.template ||
 	sed -i "/large_client_header_buffers/a\	client_body_buffer_size 128K;" /etc/nginx/uci.conf.template
-
-
-
 
 rm -rf /tmp/luci-*
 

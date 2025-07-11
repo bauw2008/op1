@@ -41,16 +41,18 @@ return view.extend({
     load: () => uci.load('netspeedtest'),
 
     render: function () {
-		const m = new form.Map('netspeedtest', _('Lan Speedtest Iperf3'),
-		  '<a href="https://iperf.fr/iperf-download.php" target="_blank" rel="noreferrer">' +
-			_('Official Website Download iperf3 client.') +
-		  '</a> ' + 
-		  _('Speed Test commands:') + ' ' + 
-		  '<pre><code>' +
-			_('TCP Download : iperf3.exe -c <server> -P 10 -4 -R      TCP Upload : iperf3.exe -c <server> -P 10 -4 \n') +
-			_('UDP Download : iperf3.exe -c <server> -u -P 10 -4 -R      UDP Upload : iperf3.exe -c <server> -u -P 10 -4') +
-		  '</code></pre>'
-		);
+	const m = new form.Map(
+	    'netspeedtest',
+	    _('Lan Speedtest Iperf3'),
+	    '<a href="https://iperf.fr/iperf-download.php" target="_blank" rel="noreferrer">' +
+		_('Official Website Download iperf3 client.') +
+	    '</a> ' +
+	    _('Speed Test command:') + ' iperf3 -c 🖥️ -p 5201' +
+	    '<pre><code>' +
+		_('TCP ⬇️ : iperf3 -c 🖥️ -P 10 -4 -R      TCP ⬆️ : iperf3 -c 🖥️ -P 10 -4 \n') +
+		_('UDP ⬇️ : iperf3 -c 🖥️ -u -P 10 -4 -R      UDP ⬆️ : iperf3 -c 🖥️ -u -P 10 -4') +
+	    '</code></pre>'
+	);
 
 
         //

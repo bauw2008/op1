@@ -115,7 +115,7 @@ echo "" # fixed newline
 
 display "系统存储" "$root_usage" "90" "1" "%" " of $root_total"
 if [ -x /sbin/cpuinfo ]; then
-printf "CPU 信息: \x1B[92m%s\x1B[0m\t" "$(echo `/sbin/cpuinfo | cut -d ' ' -f -4`)"
+printf "CPU 信息: \x1B[92m%s\x1B[0m\n" "$(/sbin/cpuinfo | sed -E 's/( @ [0-9.]+GHz)?( x [0-9]+C [0-9]+T)?( \(.*)?//g')"
 fi
 echo ""
 echo ""

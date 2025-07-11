@@ -6,21 +6,23 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=default-settings
-PKG_VERSION:=1.1
-PKG_RELEASE:=$(COMMITCOUNT)
+PKG_VERSION:=1
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/default-settings
+define Package/$(PKG_NAME)
   SECTION:=luci
   CATEGORY:=LuCI
-  TITLE:=LuCI support for Default Settings
+  TITLE:=Default Settings
+  MAINTAINER:=Bauw'
   PKGARCH:=all
-  DEPENDS:=+luci-base +@LUCI_LANG_zh-cn
+  DEPENDS:=+luci-base
 endef
 
 define Package/$(PKG_NAME)/conffiles
@@ -45,7 +47,7 @@ define Package/$(PKG_NAME)/install
 		$(CP) ./target/$(TARGETID)/files/* $(1)/; \
 	fi; \
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
-	po2lmo ./i18n/default.zh_Hans.po $(1)/usr/lib/lua/luci/i18n/default.zh-cn.lmo
+	po2lmo ./po/zh_Hans/default.po $(1)/usr/lib/lua/luci/i18n/default.zh-cn.lmo
 
 endef
 
