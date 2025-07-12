@@ -34,16 +34,8 @@ rm -f /www/luci-static/resources/view/status/include/90_mwan3.js
 #rm -f /etc/nginx/uci.conf.template-opkg
 #rm -f /etc/config/nginx-opkg
 
-# version
-#sed -i "s/LuCI openwrt-22.03 branch/LuCI branch/g" /usr/lib/lua/luci/version.lua
-sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
-#sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-#echo "DISTRIB_REVISION='R22.4.1'" >> /etc/openwrt_release
-sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
-echo "DISTRIB_DESCRIPTION='OpenWrt main'" >> /etc/openwrt_release
-
 # menu.d/controller
-sed -i 's/\"services\"/\"nas\"/g' usr/share/luci/menu.d/luci-app-ksmbd.json
+sed -i 's|services/ksmbd|nas/ksmbd|g' /usr/share/luci/menu.d/luci-app-ksmbd.json
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/minidlna.lua
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/mjpg-streamer.lua
 #sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/p910nd.lua
@@ -93,6 +85,16 @@ sed -i \
 	/etc/nginx/uci.conf.template
 grep -q "client_body_buffer_size" /etc/nginx/uci.conf.template ||
 	sed -i "/large_client_header_buffers/a\	client_body_buffer_size 128K;" /etc/nginx/uci.conf.template
+
+# ttyd
+[ -n "$(uci show ttyd 2>/dev/null)" ] && {
+	uci set ttyd.@ttyd[0].ssl='1'
+	uci set ttyd.@ttyd[0].ssl_cert='/etc/nginx/conf.d/_lan.crt'
+	uci set ttyd.@ttyd[0].ssl_key='/etc/nginx/conf.d/_lan.key'
+	uci commit ttyd
+}
+
+
 
 rm -rf /tmp/luci-*
 

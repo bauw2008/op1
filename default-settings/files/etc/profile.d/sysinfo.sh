@@ -115,7 +115,10 @@ echo "" # fixed newline
 
 display "系统存储" "$root_usage" "90" "1" "%" " of $root_total"
 if [ -x /sbin/cpuinfo ]; then
-printf "CPU 信息: \x1B[92m%s\x1B[0m\n" "$(/sbin/cpuinfo | sed -E 's/( @ [0-9.]+GHz)?( x [0-9]+C [0-9]+T)?( \(.*)?//g')"
+    cpuinfo="$(/sbin/cpuinfo)"
+    brand="$(echo "$cpuinfo" | grep -oE 'Intel|AMD')"
+    model="$(echo "$cpuinfo" | grep -oE '[A-Z][0-9]{3,5}' | head -n1)"
+    freq="$(echo "$cpuinfo" | grep -oE '[0-9.]+GHz' | head -n1)"
+    printf "CPU 信息:  \x1B[92m%s %s@%s\x1B[0m\n" "$brand" "$model" "$freq"
 fi
-echo ""
 echo ""
