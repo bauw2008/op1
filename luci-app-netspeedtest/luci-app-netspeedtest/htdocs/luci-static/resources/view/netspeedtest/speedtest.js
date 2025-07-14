@@ -101,7 +101,12 @@ return view.extend({
 
         var m, s, o;
         m = new form.Map('netspeedtest', _('Wan Ookla SpeedTest'));
-
+        
+	// 去除保存/应用/重置按钮
+	this.handleSave = null;
+	this.handleReset = null;
+	this.handleSaveApply = null;
+	
         // Result display section
         s = m.section(form.TypedSection, '_result');
         s.anonymous = true;
