@@ -91,11 +91,8 @@ msgstr "刷新日志"
 msgid "Official Website Download iperf3 client."
 msgstr "官方网站下载iperf3客户端。"
 
-msgid "Official Website Download iperf3 client."
-msgstr "官方下载 iperf3 客户端。"
-
 msgid "Speed Test commands:"
-msgstr "测速命令："
+msgstr "测速命令:"
 
 msgid "Please enable the Homebox service"
 msgstr "请将homebox服务启用"

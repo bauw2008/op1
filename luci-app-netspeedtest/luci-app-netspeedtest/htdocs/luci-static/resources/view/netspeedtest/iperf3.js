@@ -47,7 +47,7 @@ return view.extend({
 	    '<a href="https://iperf.fr/iperf-download.php" target="_blank" rel="noreferrer">' +
 		_('Official Website Download iperf3 client.') +
 	    '</a> ' +
-	    _('Speed Test command:') + ' iperf3 -c 🖥️ -p 5201' +
+	    _('Speed Test commands:') + ' iperf3 -c (server) -p 5201' +
 	    '<pre><code>' +
 		_('TCP ⬇️ : iperf3 -c 🖥️ -P 10 -4 -R      TCP ⬆️ : iperf3 -c 🖥️ -P 10 -4 \n') +
 		_('UDP ⬇️ : iperf3 -c 🖥️ -u -P 10 -4 -R      UDP ⬆️ : iperf3 -c 🖥️ -u -P 10 -4') +

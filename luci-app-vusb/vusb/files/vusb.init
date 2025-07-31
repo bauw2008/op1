@@ -1,48 +1,117 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2023 OpenWrt.org
 
 START=99
-STOP=10
-
 USE_PROCD=1
+PROG=/usr/bin/vusb
 
-NAME="vusb"
-PROG="/usr/bin/vusb"
-CONF="/etc/config/vusbconfig"
-LOG="/tmp/vusb.log"
+check_log() {
+	pgrep -f vusb_checklog | xargs kill -9 >/dev/null 2>&1
+	echo "" >/tmp/vusb_checklog
 
-start_instance () {
-    local config="$1"
+  cat > /tmp/vusb_checklog<<'EOF'
+#!/bin/sh
 
-	config_get_bool enabled "config" "enabled" "0"
-	[ "$enabled" -gt "0" ] || return 1
-	
-	procd_open_instance
-	procd_set_param command "$PROG"
-	
-	procd_append_param command -c "$CONF"
-	procd_append_param command -r "$LOG"
-	
-	if [ "$ipv6" -gt "0" ]; then
-        procd_append_param command -i
-    fi
-	
+while true; do
+	if [ -f /var/log/vusb.log ]; then
+        	LOG_SIZE=$(stat -c%s /var/log/vusb.log)
+        	LOG_SIZE_KB=$((LOG_SIZE / 1024))
+
+        	if [ "$LOG_SIZE_KB" -gt 2048 ]; then
+            		tail -n 100 /var/log/vusb.log > /var/log/vusb.log.tmp
+            		mv /var/log/vusb.log.tmp /var/log/vusb.log
+        	fi
+        fi
+sleep 3600
+done
+EOF
+	chmod +x /tmp/vusb_checklog
+	procd_open_instance vusb_checklog
+	procd_set_param command /tmp/vusb_checklog
 	procd_set_param respawn
-	procd_set_param stderr 1
 	procd_close_instance
 }
 
+start_instance() {
+	local config="$1"
+	config_get_bool enabled "config" 'enabled' '0'
+	config_get_bool ExtAccess "config" 'ExtAccess' '0'
+	config_get_bool ipv6 "config" 'ipv6' '0'
+	config_get password "config" 'password' 
+	config_get port "config" 'port' '7575'
+
+	[ "$enabled" = "1" ] || return 0
+	
+	ps | grep -w vusb | grep -v grep | grep -v $$ | awk '{print $1}' | xargs -r kill -9 >/dev/null 2>&1
+	[ -f /etc/vusb/config.ini ] || touch /etc/vusb/config.ini
+	auth=$(grep -E "^clientAuthorization=" /etc/vusb/config.ini)
+	auth_script="/tmp/vusb_auth.sh"
+	if [ -n "$password" ] ; then
+    
+    md5=$(echo -n "$password" | md5sum | awk '{print $1}')
+    cat > "$auth_script" <<EOF
+#!/bin/sh
+PASS_MD5="\$6"
+CORRECT="$md5"
+echo "\$(date '+%a %b %e %T %Y') LOG_INFO    供应商ID=【\$1】  产品ID=【\$2】  客户端账户=【\$3】  客户端IP=【\$4】  序列号=【\$5】  密码MD5=【\$6】  设备路径=【\$7】  客户端名称=【\$8】  当前连接数量=【\$9】" >>/var/log/vusb.log
+if [ "\$PASS_MD5" = "\$CORRECT" ]; then
+    echo "\$(date '+%a %b %e %T %Y') LOG_INFO    密码验证通过" >> /var/log/vusb.log
+    exit 1  # 密码正确
+else
+    echo "\$(date '+%a %b %e %T %Y') LOG_ERR    密码验证错误" >> /var/log/vusb.log
+    exit 2  # 密码错误
+fi
+EOF
+
+    chmod +x "$auth_script"
+	else
+    if [ -n "$auth" ]; then
+        sed -i '/^clientAuthorization=/d' /etc/vusb/config.ini
+    fi
+	fi
+	[ -x "$PROG" ] || chmod +x $PROG
+	echo "$(date '+%a %b %e %T %Y') LOG_INFO    开始启动" >>/var/log/vusb.log
+	procd_open_instance vusb
+	procd_set_param env TZ=CST-8
+	procd_set_param command $PROG
+	#procd_append_param command -b
+	procd_append_param command -c /etc/vusb/config.ini
+	procd_append_param command -r /var/log/vusb.log
+	[ "$ipv6" = "1" ] && procd_append_param command -i
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+	if [ "$ExtAccess" = "1" ]; then
+		echo "$(date '+%a %b %e %T %Y') LOG_INFO    防火墙放行7575外网访问" >>/var/log/vusb.log
+		uci -q delete firewall.vusb
+		uci set firewall.vusb=rule
+		uci set firewall.vusb.name="vusb"
+		uci set firewall.vusb.target="ACCEPT"
+		uci set firewall.vusb.src="wan"
+		uci set firewall.vusb.proto="all"
+		uci set firewall.vusb.dest_port="$port"
+		uci set firewall.vusb.enabled="1"
+		[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
+	fi
+	check_log
+	
+}
+
 start_service() {
-    config_load "$NAME"
-    config_foreach start_instance "$NAME"
+	config_load 'vusb'
+	config_foreach start_instance 'vusb'
 }
 
 stop_service() {
-    killall "$NAME"
+	pgrep -f vusb_checklog | xargs kill -9 >/dev/null 2>&1
+	ps | grep vusb | grep -v grep | grep -v $$ | awk '{print $1}' | xargs -r kill -9 >/dev/null 2>&1
+	echo "$(date '+%a %b %e %T %Y') LOG_INFO    停止运行" >/var/log/vusb.log
+	uci -q delete firewall.vusb
+	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
 }
 
 service_triggers() {
-    procd_add_reload_trigger "$NAME"
+      procd_add_reload_trigger "vusb"
 }
 
 

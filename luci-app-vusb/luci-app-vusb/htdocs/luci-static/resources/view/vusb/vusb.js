@@ -4,6 +4,7 @@
 'require rpc';
 'require uci';
 'require view';
+'require fs';
 
 var callServiceList = rpc.declare({
     object: 'service',
@@ -13,11 +14,11 @@ var callServiceList = rpc.declare({
 });
 
 function getServiceStatus() {
-    return L.resolveDefault(callServiceList('vusb'), {}).then(function (res) {
+    return L.resolveDefault(callServiceList('vusb'), {}).then(function(res) {
         var isRunning = false;
         try {
-            isRunning = res['vusb']['instances']['instance1']['running'];
-        } catch (e) { }
+            isRunning = res['vusb']['instances']['vusb']['running'];
+        } catch (e) {}
         return isRunning;
     });
 }
@@ -26,17 +27,17 @@ function renderStatus(isRunning) {
     var spanTemp = '<em><span style="color:%s"><strong>%s %s</strong></span></em>';
     return spanTemp.format(
         isRunning ? 'green' : 'red',
-        _('VirtualHere USB Server'),
+        _('Vusb Server'),
         isRunning ? _('RUNNING') : _('NOT RUNNING')
     );
 }
 
 return view.extend({
-    load: function () {
+    load: function() {
         return uci.load('vusb');
     },
 
-    render: function () {
+    render: function() {
         var m, s, o;
 
         m = new form.Map('vusb', _('Vusb USB Server'),
@@ -47,7 +48,7 @@ return view.extend({
             'vusbx86 注册码(自用): fcaa1433e422, 63, MCACDjNtTQQZkYAMIaTTIc4mAg4k70rRFO9CGvvYMxB8SA==。'
         );
 
-
+        // 状态显示
         s = m.section(form.TypedSection);
         s.anonymous = true;
         s.render = function () {
@@ -63,25 +64,30 @@ return view.extend({
             ]);
         };
 
+        // 主配置区
         s = m.section(form.NamedSection, 'config', 'vusb');
+
         o = s.option(form.Flag, 'enabled', _('启用'));
         o.default = o.disabled;
         o.rmempty = false;
-		
+
         o = s.option(form.Value, 'port', _('端口'));
         o.default = '7575';
-        o.description = _('默认端口:7575。');
-		
+        o.datatype = 'port';
+
         o = s.option(form.Flag, 'ipv6', _('IPv6'));
         o.default = o.disabled;
         o.rmempty = false;
 
-        // o = s.option(form.Flag, 'web', _('web'));
-        // o.default = o.disabled;
-        // o.rmempty = false;
-        // o.description = _('设置 Web 服务,打开firewall');
-		
+        o = s.option(form.Flag, 'ExtAccess', _('WEB'));
+        o.default = o.disabled;
+        o.rmempty = false;
+		o.description = _('外网访问服务');
+
+        o = s.option(form.Value, 'password', _('密码'));
+        o.password = true;
+        o.description = _('仅限激活客户端连接时需要输入正确的密码验证');
+	
         return m.render();
     }
 });
-

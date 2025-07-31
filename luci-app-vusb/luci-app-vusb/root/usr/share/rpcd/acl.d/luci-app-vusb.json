@@ -1,14 +1,26 @@
 {
-	"luci-app-vusb": {
-		"description": "Grant UCI access for luci-app-vusb",
-		"read": {
-			"ubus": {
-				"service": [ "list" ]
-			},
-			"uci": [ "vusb" ]
-		},
-		"write": {
-			"uci": [ "vusb" ]
-		}
-	}
+    "luci-app-vusb": {
+        "description": "Grant UCI and file access for luci-app-vusb",
+        "read": {
+            "file": {
+                "/etc/init.d/vusb": [ "exec" ],
+                "/etc/vusb/config.ini": ["read"],
+                "/tmp/vusb_auth.sh": ["read"],
+                "/var/log/vusb.log": ["read"]
+            },
+            "ubus": {
+                "service": ["list"]
+            },
+            "uci": ["vusb"]
+        },
+        "write": {
+            "file": {
+                "/etc/vusb/config.ini": ["write"],
+                "/tmp/vusb_auth.sh": ["write"],
+				"/var/log/vusb.log": ["write"]
+            },
+            "uci": ["vusb"]
+        }
+    }
 }
+

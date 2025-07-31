@@ -36,8 +36,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(CURDIR)/files/netspeedtest.init $(1)/etc/init.d/netspeedtest
 	$(INSTALL_DIR) $(1)/usr/lib/netspeedtest
 	$(INSTALL_BIN) $(CURDIR)/files/speedtest.lib $(1)/usr/lib/netspeedtest/speedtest
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(CURDIR)/files/99_netspeedtest.defaults $(1)/etc/uci-defaults/99_netspeedtest
+	#$(INSTALL_DIR) $(1)/etc/uci-defaults
+	#$(INSTALL_BIN) $(CURDIR)/files/99_netspeedtest.defaults $(1)/etc/uci-defaults/99_netspeedtest
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

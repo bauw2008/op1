@@ -2,12 +2,36 @@
 	"admin/services/vusb": {
 		"title": "Vusb",
 		"action": {
-			"type": "view",
-			"path": "vusb/vusb"
+			"type": "firstchild"
 		},
 		"depends": {
 			"acl": [ "luci-app-vusb" ],
 			"uci": { "vusb": true }
 		}
+	},
+	"admin/services/vusb/vusb": {
+		"title": "设定",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "vusb/vusb"
+		}
+	},
+	"admin/services/vusb/config": {
+		"title": "配置",
+		"order": 15,
+		"action": {
+			"type": "view",
+			"path": "vusb/config"
+		}
+	},
+	"admin/services/vusb/logs": {
+		"title": "日志",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "vusb/logs"
+		}
 	}
 }
+
