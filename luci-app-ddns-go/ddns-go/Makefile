@@ -1,3 +1,4 @@
+
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (C) 2023 ImmortalWrt.org
@@ -5,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-go
-PKG_VERSION:=6.11.3
+PKG_VERSION:=6.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jeessy2/ddns-go/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=09b798664ce28859ac6a8578b61ef3bad0c72636b19c77fa200af8dfa33a839e
+PKG_HASH:=59f5a705f08f539c011e12c01b4e82791130bfb4ccfb332f2b6545945fa70e38
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -66,3 +67,4 @@ endef
 
 $(eval $(call GoBinPackage,ddns-go))
 $(eval $(call BuildPackage,ddns-go))
+
