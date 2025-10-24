@@ -1,27 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtp2httpd
-PKG_VERSION:=2.7.2
+PKG_VERSION:=2.7.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Stackie Jia <jsq2627@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/stackia/rtp2httpd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=305283d030a65f27a87a8db76b049772b3e57a9c0859beec16af9b7f0905a69d
+PKG_HASH:=a934ff56703f84da09060b36d9745e639517949d7fb23ae8c08b7f8405e36000
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	if [ -d "$(PKG_BUILD_DIR)" ]; then \
-		mv $(PKG_BUILD_DIR) $(PKG_BUILD_DIR).tmp && \
-		mkdir -p $(PKG_BUILD_DIR) && \
-		mv $(PKG_BUILD_DIR).tmp/* $(PKG_BUILD_DIR)/ && \
-		rmdir $(PKG_BUILD_DIR).tmp; \
-	fi	
-endef
-
 PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +18,6 @@ define Package/rtp2httpd
 	CATEGORY:=Network
 	TITLE:=Convert multicast RTP/UDP IPTV streams into HTTP streams with FCC support
 	URL:=https://github.com/stackia/rtp2httpd
-	DEPENDS:=+libpthread
 endef
 
 define Package/rtp2httpd/description
