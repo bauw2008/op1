@@ -86,7 +86,7 @@ define Package/adguardhome/install
 	$(INSTALL_CONF) ./files/adguardhome.sysctl $(1)/etc/sysctl.d/50-adguardhome.conf
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	#$(INSTALL_BIN) ./files/adguardhome.defaults $(1)/etc/uci-defaults/adguardhome
+	$(INSTALL_BIN) ./files/adguardhome.defaults $(1)/etc/uci-defaults/adguardhome
 endef
 
 $(eval $(call Download,adguardhome-frontend))

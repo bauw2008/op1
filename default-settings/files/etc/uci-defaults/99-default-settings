@@ -94,7 +94,13 @@ grep -q "client_body_buffer_size" /etc/nginx/uci.conf.template ||
 	uci commit ttyd
 }
 
+# dhcp.@dnsmasq[0] 节点
+uci -q get dhcp.@dnsmasq[0] >/dev/null || uci add dhcp dnsmasq >/dev/null
 
+if ! uci -q get dhcp.@dnsmasq[0].port >/dev/null 2>&1; then
+    uci set dhcp.@dnsmasq[0].port='53'
+    uci commit dhcp
+fi
 
 rm -rf /tmp/luci-*
 
