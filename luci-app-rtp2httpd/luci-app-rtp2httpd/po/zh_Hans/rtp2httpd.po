@@ -44,17 +44,35 @@ msgstr "Info"
 msgid "rtp2httpd_Debug"
 msgstr "Debug"
 
-msgid "rtp2httpd_Upstream Unicast Interface"
-msgstr "上游单播接口"
+msgid "rtp2httpd_Advanced Interface Settings"
+msgstr "高级接口设置"
+
+msgid "rtp2httpd_Configure separate interfaces for multicast, FCC and RTSP"
+msgstr "分别配置组播、FCC 和 RTSP 的接口"
+
+msgid "rtp2httpd_Upstream Interface"
+msgstr "上游接口"
+
+msgid "rtp2httpd_Default interface for all upstream traffic (multicast, FCC and RTSP). Leave empty to use routing table."
+msgstr "所有上游流量（组播、FCC 和 RTSP）使用的默认接口。留空则使用路由表。"
 
 msgid "rtp2httpd_Upstream Multicast Interface"
 msgstr "上游组播接口"
 
-msgid "rtp2httpd_Interface_unicast to use for requesting unicast upstream media stream (default none, which follows the routing table)"
-msgstr "用于请求上游单播媒体流（FCC/RTSP）的接口（默认不指定，跟随路由表）"
+msgid "rtp2httpd_Interface to use for multicast (RTP/UDP) upstream media stream (default: use routing table)"
+msgstr "用于组播（RTP/UDP）上游媒体流的接口（默认：使用路由表）"
 
-msgid "rtp2httpd_Interface_multicast to use for requesting multicast upstream media stream (default none, which follows the routing table)"
-msgstr "用于请求上游组播媒体流（RTP/UDP）的接口（默认不指定，跟随路由表）"
+msgid "rtp2httpd_Upstream FCC Interface"
+msgstr "上游 FCC 接口"
+
+msgid "rtp2httpd_Interface to use for FCC unicast upstream media stream (default: use routing table)"
+msgstr "用于 FCC 单播上游媒体流的接口（默认：使用路由表）"
+
+msgid "rtp2httpd_Upstream RTSP Interface"
+msgstr "上游 RTSP 接口"
+
+msgid "rtp2httpd_Interface to use for RTSP unicast upstream media stream (default: use routing table)"
+msgstr "用于 RTSP 单播上游媒体流的接口（默认：使用路由表）"
 
 msgid "rtp2httpd_Max clients"
 msgstr "最大客户端数"
@@ -72,31 +90,16 @@ msgid "rtp2httpd_Maximum number of buffers in zero-copy pool. Each buffer is 153
 msgstr "零拷贝缓冲池的最大缓冲区数量。每个缓冲区 1536 字节，默认 16384 个（约 24MB）。增大此值以提高多客户端并发时的吞吐量。"
 
 msgid "rtp2httpd_Hostname"
-msgstr "仅允许使用域名连接"
+msgstr "主机名/域名"
 
-msgid "rtp2httpd_Hostname to check in the Host: HTTP header"
-msgstr "开启后，只有 HTTP Host 头匹配指定域名时，rtp2httpd 才会允许连接"
+msgid "rtp2httpd_Hostname description"
+msgstr "配置后将会检查 HTTP Host 头，必须匹配这里的值才能访问。M3U 转换时，也会使用这个值来作为转换后节目地址的域名。使用反向代理时，需要配置为经过反向代理后的访问地址（包括 http(s):// 和路径前缀），例如 https://my-domain.com/rtp2httpd，并且需要反向代理透传 Host 头。"
 
 msgid "rtp2httpd_R2H Token"
 msgstr "HTTP 请求认证令牌"
 
 msgid "rtp2httpd_Authentication token for HTTP requests"
 msgstr "设置后，所有 HTTP 请求必须携带 r2h-token 查询参数，且值与此配置匹配（例如：http://server:5140/service?r2h-token=your-token）"
-
-msgid "rtp2httpd_FCC NAT traversal"
-msgstr "FCC NAT 穿透模式"
-
-msgid "rtp2httpd_Only needed when used as a downstream router"
-msgstr "仅当作为二级路由并需要使用 FCC（快速频道切换）时启用"
-
-msgid "rtp2httpd_Don't use NAT traversal"
-msgstr "不使用 NAT 穿透"
-
-msgid "rtp2httpd_NAT punch hole"
-msgstr "NAT 打洞（已废弃，不要使用）"
-
-msgid "rtp2httpd_NAT-PMP"
-msgstr "NAT-PMP（需要上级路由器支持）"
 
 msgid "rtp2httpd_Use Config File"
 msgstr "使用配置文件"
@@ -151,3 +154,33 @@ msgstr "FFmpeg 参数"
 
 msgid "rtp2httpd_FFmpeg arguments description"
 msgstr "生成快照时传递给 FFmpeg 的额外参数。常用选项：-hwaccel none（无硬件加速）、-hwaccel vaapi（Intel GPU）"
+
+msgid "rtp2httpd_Zero-Copy on Send"
+msgstr "启用零拷贝发送"
+
+msgid "rtp2httpd_Enable zero-copy send with MSG_ZEROCOPY for better performance. Requires kernel 4.14+. Can improve throughput and reduce CPU usage on supported devices."
+msgstr "启用 MSG_ZEROCOPY 零拷贝发送以提升性能。需要内核 4.14+（支持 MSG_ZEROCOPY）。在支持的设备上，可提升吞吐量并降低 CPU 占用，特别是在高并发负载下。使用反向代理时不建议开启。"
+
+msgid "rtp2httpd_Player Page"
+msgstr "播放器页面"
+
+msgid "rtp2httpd_Open Player Page"
+msgstr "打开播放器页面"
+
+msgid "rtp2httpd_Player Page Path"
+msgstr "播放器页面路径"
+
+msgid "rtp2httpd_Player page path description"
+msgstr "播放器页面的 URL 路径（默认：/player）"
+
+msgid "rtp2httpd_External M3U"
+msgstr "外部 M3U"
+
+msgid "rtp2httpd_External M3U description"
+msgstr "从 URL 获取 M3U 播放列表（支持 file://、http://、https://）。示例：https://example.com/playlist.m3u 或 file:///path/to/playlist.m3u"
+
+msgid "rtp2httpd_External M3U Update Interval"
+msgstr "外部 M3U 更新间隔"
+
+msgid "rtp2httpd_External M3U update interval description"
+msgstr "外部 M3U 自动更新间隔（秒），默认 86400（24 小时）。设为 0 禁用自动更新。"
