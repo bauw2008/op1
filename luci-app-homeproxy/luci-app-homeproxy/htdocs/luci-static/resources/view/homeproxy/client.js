@@ -297,7 +297,7 @@ return view.extend({
 		o = s.taboption('routing', form.Flag, 'ipv6_support', _('IPv6 support'));
 		o.default = o.enabled;
 		o.rmempty = false;
-		
+
 		// DNS 劫持模式选择
 		o = s.taboption('routing', form.Flag, 'dns_hijack', _('DNS 劫持'));
 		o.default = o.enabled  // 默认启用
@@ -954,7 +954,7 @@ return view.extend({
 		so.value('tcp', _('TCP'));
 		so.value('tls', _('TLS'));
 		so.value('https', _('HTTPS'));
-		so.value('http3', _('HTTP3'));
+		so.value('h3', _('HTTP/3'));
 		so.value('quic', _('QUIC'));
 		so.default = 'udp';
 		so.rmempty = false;
@@ -966,26 +966,27 @@ return view.extend({
 
 		so = ss.option(form.Value, 'server_port', _('Port'),
 			_('The port of the DNS server.'));
+		so.placeholder = 'auto';
 		so.datatype = 'port';
 
 		so = ss.option(form.Value, 'path', _('Path'),
 			_('The path of the DNS server.'));
 		so.placeholder = '/dns-query';
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'headers', _('Headers'),
 			_('Additional headers to be sent to the DNS server.'));
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'tls_sni', _('TLS SNI'),
 			_('Used to verify the hostname on the returned certificates.'));
 		so.depends('type', 'tls');
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.depends('type', 'quic');
 		so.modalonly = true;
 
