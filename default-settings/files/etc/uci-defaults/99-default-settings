@@ -46,28 +46,28 @@ sed -i 's|services/ksmbd|nas/ksmbd|g' /usr/share/luci/menu.d/luci-app-ksmbd.json
 cat <<EOF >> /etc/apk/repositories.d/customfeeds.list
 
 # bauw feeds
-https://bauw2.serv00.net/snapshots/targets/x86/64/packages/packages.adb
-https://bauw2.serv00.net/snapshots/packages/x86_64/base/packages.adb
-https://bauw2.serv00.net/snapshots/packages/x86_64/luci/packages.adb
-https://bauw2.serv00.net/snapshots/packages/x86_64/packages/packages.adb
-#https://bauw2.serv00.net/snapshots/packages/x86_64/routing/packages.adb
-#https://bauw2.serv00.net/snapshots/packages/x86_64/telephony/packages.adb
-#https://bauw2.serv00.net/snapshots/packages/x86_64/video/packages.adb
+https://bauw2.serv00.net/releases/25.12.0/targets/x86/64/packages/packages.adb
+https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/base/packages.adb
+https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/luci/packages.adb
+https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/packages/packages.adb
+#https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/routing/packages.adb
+#https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/telephony/packages.adb
+#https://bauw2.serv00.net/releases/25.12.0/packages/x86_64/video/packages.adb
 
 # immortalwrt feeds
-#https://downloads.immortalwrt.org/snapshots/targets/x86/64/packages/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/base/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/luci/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/packages/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/routing/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/telephony/packages.adb
-#https://downloads.immortalwrt.org/snapshots/packages/x86_64/video/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/targets/x86/64/packages/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/base/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/luci/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/packages/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/routing/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/telephony/packages.adb
+#https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/video/packages.adb
 EOF
 
-sed -i 's|^https://downloads.openwrt.org/snapshots/targets/x86/64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/base/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/luci/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
-sed -i 's|^https://downloads.openwrt.org/snapshots/packages/x86_64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/releases/25.12.0/targets/x86/64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/releases/25.12.0/packages/x86_64/base/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/releases/25.12.0/packages/x86_64/luci/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
+sed -i 's|^https://downloads.openwrt.org/releases/25.12.0/packages/x86_64/packages/packages.adb|#&|' /etc/apk/repositories.d/distfeeds.list
 
 # wireless
 #sed -i '/option disabled/d' /etc/config/wireless

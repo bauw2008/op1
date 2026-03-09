@@ -1,7 +1,8 @@
 #!/bin/bash
 . /usr/share/openclash/log.sh
-. /usr/share/openclash/openclash_curl.sh
 . /usr/share/openclash/uci.sh
+. /usr/share/openclash/openclash_curl.sh
+. /usr/share/openclash/openclash_ps.sh
 
 set_lock() {
    exec 878>"/tmp/lock/openclash_update.lock" 2>/dev/null
@@ -14,6 +15,8 @@ del_lock() {
 }
 
 set_lock
+inc_job_counter
+restart=0
 
 if [ -n "$1" ] && [ "$1" != "one_key_update" ]; then
    [ ! -f "/tmp/openclash_last_version" ] && /usr/share/openclash/openclash_version.sh "$1" 2>/dev/null
@@ -26,6 +29,7 @@ fi
 if [ ! -f "/tmp/openclash_last_version" ]; then
    LOG_OUT "Error: Failed to get version information, please try again later..."
    SLOG_CLEAN
+   dec_job_counter_and_restart "$restart"
    del_lock
    exit 0
 fi
@@ -33,7 +37,7 @@ fi
 version_compare() {
     local current_ver="$1"
     local latest_ver="$2"
-    
+
     if echo "1.0.0" | sort -V >/dev/null 2>&1; then
       if [ "$(printf '%s\n%s\n' "$current_ver" "$latest_ver" | sort -V | head -n1)" = "$current_ver" ] && [ "$current_ver" != "$latest_ver" ]; then
          return 0
@@ -61,8 +65,6 @@ github_address_mod=$(uci_get_config "github_address_mod" || echo 0)
 
 #一键更新
 if [ "$1" = "one_key_update" ]; then
-   uci -q set openclash.config.enable=1
-   uci -q commit openclash
    if [ "$github_address_mod" = "0" ] && [ -z "$2" ]; then
       LOG_OUT "Tip: If the download fails, try setting the CDN in Overwrite Settings - General Settings - Github Address Modify Options"
    fi
@@ -73,7 +75,7 @@ if [ "$1" = "one_key_update" ]; then
       /usr/share/openclash/openclash_core.sh "Meta" "$1" >/dev/null 2>&1 &
       github_address_mod=0
    fi
-   
+
    wait
 else
    if [ "$github_address_mod" = "0" ]; then
@@ -125,13 +127,13 @@ if [ -n "$OP_CV" ] && [ -n "$OP_LV" ] && version_compare "$OP_CV" "$OP_LV" && [ 
          SHOW_DOWNLOAD_PROGRESS=1 DOWNLOAD_FILE_CURL "$DOWNLOAD_URL" "$DOWNLOAD_PATH"
          download_result=$?
       fi
-      
+
       if [ "$download_result" -eq 0 ]; then
          LOG_OUT "Tip:【$retry_count/$max_retries】【OpenClash - v$LAST_VER】Download successful, start pre update test..."
-         
+
          pre_test_success=false
          pkg_update_success=true
-         
+
          if [ -x "/bin/opkg" ]; then
             opkg update >/dev/null 2>&1
             if [ $? -ne 0 ]; then
@@ -158,7 +160,7 @@ if [ -n "$OP_CV" ] && [ -n "$OP_LV" ] && version_compare "$OP_CV" "$OP_LV" && [ 
                fi
             fi
          fi
-         
+
          if [ "$pre_test_success" = "true" ]; then
             LOG_OUT "Tip:【$retry_count/$max_retries】【OpenClash - v$LAST_VER】Pre update test passed, ready to update and please do not refresh the page and other operations..."
             break
@@ -173,13 +175,9 @@ if [ -n "$OP_CV" ] && [ -n "$OP_LV" ] && version_compare "$OP_CV" "$OP_LV" && [ 
                elif [ -x "/usr/bin/apk" ]; then
                   LOG_OUT "Error:【OpenClash - v$LAST_VER】Pre update test failed after 3 attempts, the file is saved in /tmp/openclash.apk, please try to update manually with【apk add -q --force-overwrite --clean-protected --allow-untrusted /tmp/openclash.apk】"
                fi
-               if [ "$(uci_get_config "restart")" -eq 1 ]; then
-                  uci -q set openclash.config.restart=0
-                  uci -q commit openclash
-                  /etc/init.d/openclash restart >/dev/null 2>&1 &
-               else
-                  SLOG_CLEAN
-               fi
+
+               SLOG_CLEAN
+               dec_job_counter_and_restart "$restart"
                del_lock
                exit 0
             fi
@@ -193,13 +191,8 @@ if [ -n "$OP_CV" ] && [ -n "$OP_LV" ] && version_compare "$OP_CV" "$OP_LV" && [ 
             LOG_OUT "Error:【OpenClash - v$LAST_VER】Download Failed after 3 attempts, please check the network or try again later!"
             rm -rf /tmp/openclash.ipk >/dev/null 2>&1
             rm -rf /tmp/openclash.apk >/dev/null 2>&1
-            if [ "$(uci_get_config "restart")" -eq 1 ]; then
-               uci -q set openclash.config.restart=0
-               uci -q commit openclash
-               /etc/init.d/openclash restart >/dev/null 2>&1 &
-            else
-               SLOG_CLEAN
-            fi
+            SLOG_CLEAN
+            dec_job_counter_and_restart "$restart"
             del_lock
             exit 0
          fi
@@ -248,13 +241,13 @@ check_install_success()
 {
    local target_version="$1"
    local current_version=""
-   
+
    if [ -x "/bin/opkg" ]; then
       current_version=$(rm -f /var/lock/opkg.lock && opkg status luci-app-openclash 2>/dev/null |grep 'Version' |awk -F 'Version: ' '{print $2}' 2>/dev/null)
    elif [ -x "/usr/bin/apk" ]; then
       current_version=$(apk list luci-app-openclash 2>/dev/null|grep 'installed' | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 2>/dev/null)
    fi
-   
+
    if [ -n "$current_version" ] && [ "$current_version" = "$target_version" ]; then
       return 0
    else
@@ -314,7 +307,7 @@ install_success=false
 while [ $install_retry_count -lt $max_install_retries ]; do
    install_retry_count=$((install_retry_count + 1))
    LOG_OUT "Tip:【$install_retry_count/$max_install_retries】Installing the new version, please do not refresh the page or do other operations..."
-   
+
    packages_to_check="luci-compat kmod-inet-diag kmod-nft-tproxy kmod-ipt-nat iptables-mod-tproxy iptables-mod-extra ipset"
    installed_before=""
    if [ -x "/bin/opkg" ]; then
@@ -332,9 +325,9 @@ while [ $install_retry_count -lt $max_install_retries ]; do
       done
       apk add -q --force-overwrite --clean-protected --allow-untrusted /tmp/openclash.apk
    fi
-   
+
    sleep 2
-   
+
    if check_install_success "$LAST_VER"; then
       install_success=true
       install_missing_packages "$installed_before"
@@ -384,11 +377,11 @@ EOF
    while [ $retry_count -lt $max_retries ]; do
       retry_count=$((retry_count + 1))
       LOG_OUT "Tip:【$retry_count/$max_retries】Attempting to start update service..."
-      
+
       ubus call service add '{"name":"openclash_update","instances":{"update":{"command":["/tmp/openclash_update.sh"],"stdout":true,"stderr":true,"env":{"LAST_VER":"'"$LAST_VER"'"}}}}' >/dev/null 2>&1
-      
+
       sleep 3
-      
+
       if ubus call service list '{"name":"openclash_update"}' 2>/dev/null | jsonfilter -e '@.openclash_update.instances.*.running' | grep -q 'true'; then
          service_started=true
          break
@@ -399,7 +392,7 @@ EOF
          fi
       fi
    done
-   
+
    if [ "$service_started" = false ]; then
       LOG_OUT "Error: Failed to start update service after 3 attempts, please check and try again later..."
    fi
@@ -411,12 +404,8 @@ else
    else
       LOG_OUT "Tip: OpenClash has not been updated, stop continuing!"
    fi
-   if [ "$(uci_get_config "restart")" -eq 1 ]; then
-      uci -q set openclash.config.restart=0
-      uci -q commit openclash
-      /etc/init.d/openclash restart >/dev/null 2>&1 &
-   else
-      SLOG_CLEAN
-   fi
+   SLOG_CLEAN
+   dec_job_counter_and_restart "$restart"
 fi
+
 del_lock

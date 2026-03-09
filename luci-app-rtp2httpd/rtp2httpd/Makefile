@@ -1,26 +1,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtp2httpd
-PKG_VERSION:=3.5.1
+PKG_VERSION:=3.11.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Stackie Jia <jsq2627@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/stackia/rtp2httpd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=068607f8dab73df0616a4ad69e721c5064796d04ac91fa0970e205242ebb734f
+PKG_HASH:=992d41429e063ed2e66a682151bff5928ad4e2da2164abd1b093ca04c4f220fd
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_FIXUP:=autoreconf
-
+PKG_MAINTAINER:=Stackie Jia <jsq2627@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/rtp2httpd
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=Convert RTP/UDP/RTSP streams into HTTP streams with FCC support
+	TITLE:=Multicast RTP/RTSP to Unicast HTTP stream converter, optimized for China IPTV
 	URL:=https://github.com/stackia/rtp2httpd
 endef
 
@@ -32,8 +30,8 @@ define Package/rtp2httpd/description
 	incoming RTP data to HTTP stream.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-optimization=-O3
+CMAKE_OPTIONS += \
+	-DENABLE_AGGRESSIVE_OPT=ON
 
 define Package/rtp2httpd/conffiles
 /etc/config/rtp2httpd
@@ -45,7 +43,7 @@ define Package/rtp2httpd/install
 	$(INSTALL_CONF) ./files/rtp2httpd.conf $(1)/etc/config/rtp2httpd
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/rtp2httpd.conf $(1)/etc
 	$(INSTALL_BIN) ./files/rtp2httpd.init $(1)/etc/init.d/rtp2httpd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/rtp2httpd $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rtp2httpd $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,rtp2httpd))
